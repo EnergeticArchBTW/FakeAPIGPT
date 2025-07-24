@@ -7,15 +7,29 @@ def chatgpt(prompt, headless_mode=True):
     Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
     i próbą wymuszenia fokusu na oknie przeglądarki w trybie GUI.
     """
-    
+    # Ustal pozycję, na którą chcesz przesunąć okno poza widokiem
+    # Te wartości powinny być wystarczająco duże, aby okno było poza ekranem.
+    # Możesz je dostosować w zależności od rozdzielczości Twojego ekranu.
+    out_of_view_x = -3000
+    out_of_view_y = -3000
     try:
-        with SB(uc=True, headless=headless_mode, test=True) as sb:
+        with SB(uc=True, headless2=headless_mode, test=True, do_not_track=True, maximize=True) as sb:
+            if not headless_mode:
+                # Używamy set_window_position() do przesunięcia okna
+                sb.set_window_position(out_of_view_x, out_of_view_y)
+                print(f"Ustawiłem pozycję okna przeglądarki na ({out_of_view_x}, {out_of_view_y}) poza widokiem.")
+            
             url = "https://chatgpt.com/"
             sb.activate_cdp_mode(url)
             sb.sleep(1) # Krótka pauza na załadowanie początkowe
 
             # Jeśli jesteśmy w trybie GUI, spróbuj wymusić fokus na starcie
             if not headless_mode:
+                #sb.uc_gui_click_captcha()
+                #sb.sleep(1)
+                #sb.uc_gui_handle_captcha()
+                #sb.sleep(1)
+
                 print("Wymuszam fokus na oknie przeglądarki...")
                 # Metoda 1: Aktywacja okna za pomocą JavaScript (bardziej niezawodna)
                 # Otwiera nowe puste okno i natychmiast je zamyka, co może przywrócić fokus
@@ -29,6 +43,11 @@ def chatgpt(prompt, headless_mode=True):
                 sb.sleep(0.5) # Krótka pauza
 
             try:
+                #debugowanie
+                html = sb.get_page_source()
+                with open("debug_headless.html", "w", encoding="utf-8") as f:
+                    f.write(html)
+                
                 sb.wait_for_element("#prompt-textarea", timeout=3)
                     
                 print("Pole do wpisywania tekstu (#prompt-textarea) jest widoczne. Kontynuuję.")
@@ -44,8 +63,9 @@ def chatgpt(prompt, headless_mode=True):
                     
                 chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
                 soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
-                soup = soup.replace("\n\n\n", "\n\n")
-                soup = soup.replace("\n\n\n", "\n\n")
+                #poprawiam odległości między linijkami
+                for i in range(3):
+                    soup = soup.replace("\n\n\n", "\n\n")
                 return soup
 
             except Exception as e:
@@ -58,48 +78,7 @@ def chatgpt(prompt, headless_mode=True):
                     else:
                         print("Wykryto timeout w trybie GUI. Prawdopodobnie CAPTCHA lub inna blokada wymaga interwencji.")
                         print("Próbuję rozwiązać CAPTCHA za pomocą sb.uc_gui_click_captcha() i sb.uc_gui_handle_captcha()...")
-                        
-                        # Tutaj również spróbuj wymusić fokus przed interakcją z CAPTCHA
-                        print("Ponownie wymuszam fokus przed interakcją z CAPTCHA...")
-                        sb.execute_script("window.open(''); window.close();")
-                        sb.switch_to_default_window()
-                        sb.sleep(0.5)
-                        sb.execute_script("window.focus();")
-                        sb.sleep(0.5)
-
-                        try:
-                            sb.uc_gui_click_captcha()
-                            sb.sleep(3)
-                            sb.uc_gui_handle_captcha()
-                            sb.sleep(5)
-                            
-                            print("Ponowna próba znalezienia pola tekstowego po obsłudze CAPTCHA...")
-                            sb.wait_for_element("#prompt-textarea", timeout=15)
-                            
-                            print("CAPTCHA rozwiązana, pole do wpisywania tekstu jest widoczne. Kontynuuję.")
-                            sb.click_if_visible('button[aria-label="Close dialog"]')
-                            sb.press_keys("#prompt-textarea", prompt)
-                            sb.click('button[data-testid="send-button"]')
-
-                            sb.sleep(3)
-                            with suppress(Exception):
-                                sb.wait_for_element_not_visible(
-                                    'button[data-testid="stop-button"]', timeout=1000
-                                )
-                            
-                            chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
-                            soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
-                            soup = soup.replace("\n\n\n", "\n\n")
-                            soup = soup.replace("\n\n\n", "\n\n")
-                            return soup
-
-                        except Exception as inner_e:
-                            if "was not found after" in str(inner_e) and "#prompt-textarea" in str(inner_e):
-                                print(f"!!! BŁĄD: Pole do wpisywania tekstu nadal niewidoczne nawet po próbie rozwiązania CAPTCHA w trybie GUI. {inner_e}")
-                            else:
-                                print(f"!!! BŁĄD: Wystąpił inny problem podczas obsługi CAPTCHA w trybie GUI: {inner_e}")
-                            raise
-
+                        return chatgpt(prompt, headless_mode=False)
                 else:
                     print(f"!!! BŁĄD: Wystąpił nieoczekiwany błąd wewnątrz sesji SeleniumBase: {e}")
                     raise
@@ -107,7 +86,7 @@ def chatgpt(prompt, headless_mode=True):
     except Exception as e:
         print(f"!!! KRYTYCZNY BŁĄD: Wystąpił nieoczekiwany problem na najwyższym poziomie: {e}")
         raise
-response = chatgpt("Ta wiadomość jest zaszyfrowana, spróbuj ją odszyfrować i powiedz jak to zrobiłeś (podpowiedź, to nie jest staropolski): Pnaó, pnaój jśę uęiwńł!")
+response = chatgpt("Zacytuj dokładnie to co napisałem pod spodem w cudzysłowiach:Ala ma kota")
 print(response)
 """
 def chatgpt(prompt, headless_mode=True):
