@@ -1,11 +1,119 @@
 from contextlib import suppress
 from seleniumbase import SB
 
+
 def chatgpt(prompt, headless_mode=True):
     """
     Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
-    w przypadku, gdy pole do wprowadzania tekstu nie pojawi się w oczekiwanym czasie.
+    i próbą wymuszenia fokusu na oknie przeglądarki w trybie GUI.
     """
+    
+    try:
+        with SB(uc=True, headless=headless_mode, test=True) as sb:
+            url = "https://chatgpt.com/"
+            sb.activate_cdp_mode(url)
+            sb.sleep(1) # Krótka pauza na załadowanie początkowe
+
+            # Jeśli jesteśmy w trybie GUI, spróbuj wymusić fokus na starcie
+            if not headless_mode:
+                print("Wymuszam fokus na oknie przeglądarki...")
+                # Metoda 1: Aktywacja okna za pomocą JavaScript (bardziej niezawodna)
+                # Otwiera nowe puste okno i natychmiast je zamyka, co może przywrócić fokus
+                sb.execute_script("window.open(''); window.close();")
+                # Przejście z powrotem do oryginalnego okna (jeśli było ich więcej)
+                sb.switch_to_default_window() 
+                sb.sleep(0.5) # Krótka pauza
+
+                # Metoda 2: Proba aktywacji obecnego okna
+                sb.execute_script("window.focus();")
+                sb.sleep(0.5) # Krótka pauza
+
+            try:
+                sb.wait_for_element("#prompt-textarea", timeout=3)
+                    
+                print("Pole do wpisywania tekstu (#prompt-textarea) jest widoczne. Kontynuuję.")
+                sb.click_if_visible('button[aria-label="Close dialog"]')
+                sb.press_keys("#prompt-textarea", prompt)
+                sb.click('button[data-testid="send-button"]')
+
+                sb.sleep(3)
+                with suppress(Exception):
+                    sb.wait_for_element_not_visible(
+                        'button[data-testid="stop-button"]', timeout=1000
+                    )
+                    
+                chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
+                soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
+                soup = soup.replace("\n\n\n", "\n\n")
+                soup = soup.replace("\n\n\n", "\n\n")
+                return soup
+
+            except Exception as e:
+                if ("was not found after" in str(e) and "#prompt-textarea" in str(e)) or "object has no attribute" in str(e):
+                    print(f">>> Timeout: {e}")
+                    
+                    if headless_mode:
+                        print("Wykryto timeout w trybie headless. Próbuję ponownie w trybie GUI...")
+                        return chatgpt(prompt, headless_mode=False)
+                    else:
+                        print("Wykryto timeout w trybie GUI. Prawdopodobnie CAPTCHA lub inna blokada wymaga interwencji.")
+                        print("Próbuję rozwiązać CAPTCHA za pomocą sb.uc_gui_click_captcha() i sb.uc_gui_handle_captcha()...")
+                        
+                        # Tutaj również spróbuj wymusić fokus przed interakcją z CAPTCHA
+                        print("Ponownie wymuszam fokus przed interakcją z CAPTCHA...")
+                        sb.execute_script("window.open(''); window.close();")
+                        sb.switch_to_default_window()
+                        sb.sleep(0.5)
+                        sb.execute_script("window.focus();")
+                        sb.sleep(0.5)
+
+                        try:
+                            sb.uc_gui_click_captcha()
+                            sb.sleep(3)
+                            sb.uc_gui_handle_captcha()
+                            sb.sleep(5)
+                            
+                            print("Ponowna próba znalezienia pola tekstowego po obsłudze CAPTCHA...")
+                            sb.wait_for_element("#prompt-textarea", timeout=15)
+                            
+                            print("CAPTCHA rozwiązana, pole do wpisywania tekstu jest widoczne. Kontynuuję.")
+                            sb.click_if_visible('button[aria-label="Close dialog"]')
+                            sb.press_keys("#prompt-textarea", prompt)
+                            sb.click('button[data-testid="send-button"]')
+
+                            sb.sleep(3)
+                            with suppress(Exception):
+                                sb.wait_for_element_not_visible(
+                                    'button[data-testid="stop-button"]', timeout=1000
+                                )
+                            
+                            chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
+                            soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
+                            soup = soup.replace("\n\n\n", "\n\n")
+                            soup = soup.replace("\n\n\n", "\n\n")
+                            return soup
+
+                        except Exception as inner_e:
+                            if "was not found after" in str(inner_e) and "#prompt-textarea" in str(inner_e):
+                                print(f"!!! BŁĄD: Pole do wpisywania tekstu nadal niewidoczne nawet po próbie rozwiązania CAPTCHA w trybie GUI. {inner_e}")
+                            else:
+                                print(f"!!! BŁĄD: Wystąpił inny problem podczas obsługi CAPTCHA w trybie GUI: {inner_e}")
+                            raise
+
+                else:
+                    print(f"!!! BŁĄD: Wystąpił nieoczekiwany błąd wewnątrz sesji SeleniumBase: {e}")
+                    raise
+
+    except Exception as e:
+        print(f"!!! KRYTYCZNY BŁĄD: Wystąpił nieoczekiwany problem na najwyższym poziomie: {e}")
+        raise
+response = chatgpt("Ta wiadomość jest zaszyfrowana, spróbuj ją odszyfrować i powiedz jak to zrobiłeś (podpowiedź, to nie jest staropolski): Pnaó, pnaój jśę uęiwńł!")
+print(response)
+"""
+def chatgpt(prompt, headless_mode=True):
+    #Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
+    #w przypadku, gdy pole do wprowadzania tekstu nie pojawi się w oczekiwanym czasie.
+
     # Zewnętrzny blok try-except dla obsługi błędów na najwyższym poziomie
     try:
         with SB(uc=True, headless=headless_mode, test=True) as sb:
@@ -16,7 +124,7 @@ def chatgpt(prompt, headless_mode=True):
             try:
                 # Czekamy na pole tekstowe z timeoutem
                 # W trybie CDP, jeśli element nie zostanie znaleziony, rzuci generyczny Exception
-                sb.wait_for_element("#prompt-textarea", timeout=5)
+                sb.wait_for_element("#prompt-textarea", timeout=2)
                     
                 # Jeśli pole się pojawiło, kontynuujemy normalnie
                 print("Pole do wpisywania tekstu (#prompt-textarea) jest widoczne. Kontynuuję.")
@@ -38,7 +146,7 @@ def chatgpt(prompt, headless_mode=True):
 
             except Exception as e: # Zmieniamy z TimeoutException na ogólny Exception
                 # Sprawdzamy, czy komunikat błędu wskazuje na timeout elementu
-                if "was not found after" in str(e) and "#prompt-textarea" in str(e):
+                if ("was not found after" in str(e) and "#prompt-textarea" in str(e)) or "object has no attribute" in str(e):
                     print(f">>> Timeout: {e}") # Wypisujemy cały komunikat błędu
                     
                     if headless_mode:
@@ -95,9 +203,9 @@ def chatgpt(prompt, headless_mode=True):
         raise # Rzuć wyjątek, jeśli cała operacja zawiodła
 
 # Przykładowe użycie:
-response = chatgpt("Po prostu powiedz ala ma kota.")
+response = chatgpt("Ta wiadomość jest zaszyfrowana, spróbuj ją odszyfrować i powiedz jak to zrobiłeś (podpowiedź, to nie jest staropolski): Pnaó, pnaój jśę uęiwńł!")
 print(response)
-
+"""
 """
 import win32gui
 import time
