@@ -1,12 +1,59 @@
 from contextlib import suppress
 from seleniumbase import SB
 
+#concept with function that always use headless=False
+def chatgpt(prompt):
+    # Set the position to which you want to move the window off-screen
+    # These values should be large enough for the window to be outside the visible area.
+    # You can adjust them depending on your screen resolution.
+    out_of_view_x = -3000
+    out_of_view_y = -3000
+    with SB(uc=True, test=True) as sb:
+        try:
+            #moving the window away from screen
+            sb.set_window_position(out_of_view_x, out_of_view_y)
 
+            url = "https://chatgpt.com/"
+            sb.activate_cdp_mode(url)
+            sb.sleep(1)
+
+            #focus on the window
+            sb.execute_script("window.open(''); window.close();")
+            sb.switch_to_default_window() 
+            sb.sleep(0.5)
+
+            sb.uc_gui_click_captcha()
+            sb.sleep(1)
+            sb.uc_gui_handle_captcha()
+            sb.sleep(1)
+        
+            sb.click_if_visible('button[aria-label="Close dialog"]')
+            sb.press_keys("#prompt-textarea", prompt)
+            sb.click('button[data-testid="send-button"]')
+
+            sb.sleep(3)
+            with suppress(Exception):
+                # The "Stop" button disappears when ChatGPT is done typing a response
+                sb.wait_for_element_not_visible(
+                    'button[data-testid="stop-button"]', timeout=1000
+                )
+            chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
+            soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
+            #remove spaces between lines
+            for i in range(3):
+                soup = soup.replace("\n\n\n", "\n\n")
+            return soup
+        except Exception as e:
+            #when something goes wrong do it once again
+            return chatgpt(prompt)
+
+print(chatgpt('Napisz referat na 500 słów o dzisiejszej ekonomii na bliskim wschodzie (możesz użyć internetu). nie pytaj o szczegóły tylko po prostu pisz. Zakończ ją słowem skończyłem.'))
+
+"""
 def chatgpt(prompt, headless_mode=True):
-    """
-    Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
-    i próbą wymuszenia fokusu na oknie przeglądarki w trybie GUI.
-    """
+    #Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
+    #i próbą wymuszenia fokusu na oknie przeglądarki w trybie GUI.
+    
     # Ustal pozycję, na którą chcesz przesunąć okno poza widokiem
     # Te wartości powinny być wystarczająco duże, aby okno było poza ekranem.
     # Możesz je dostosować w zależności od rozdzielczości Twojego ekranu.
@@ -88,6 +135,7 @@ def chatgpt(prompt, headless_mode=True):
         raise
 response = chatgpt("Zacytuj dokładnie to co napisałem pod spodem w cudzysłowiach:Ala ma kota")
 print(response)
+"""
 """
 def chatgpt(prompt, headless_mode=True):
     #Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
@@ -208,40 +256,6 @@ def hide_tab():
     except Exception as e:
         print(f"Błąd podczas ukrywania okna: {e}")
     # --- Koniec nowych linii ---
-"""
-"""
-#concept with function that always use headless=False
-def chatgpt(prompt):    
-    with SB(uc=True, test=True) as sb:
-        url = "https://chatgpt.com/"
-        sb.activate_cdp_mode(url)
-        sb.sleep(1)
-        
-        sb.uc_gui_click_captcha()
-        sb.sleep(1)
-        sb.uc_gui_handle_captcha()
-        sb.sleep(1)
-        
-        sb.click_if_visible('button[aria-label="Close dialog"]')
-        sb.press_keys("#prompt-textarea", prompt)
-        sb.click('button[data-testid="send-button"]')
-
-        #hide_tab()
-
-        #print('*** Input for ChatGPT: ***\n"%s"' % prompt)
-        sb.sleep(3)
-        with suppress(Exception):
-            # The "Stop" button disappears when ChatGPT is done typing a response
-            sb.wait_for_element_not_visible(
-                'button[data-testid="stop-button"]', timeout=1000
-            )
-        chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
-        soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
-        soup = soup.replace("\n\n\n", "\n\n")
-        soup = soup.replace("\n\n\n", "\n\n")
-        return soup
-
-print(chatgpt('Napisz referat na 500 słów o dupie. nie pytaj o szczegóły tylko po prostu pisz. Zakończ ją słowem skończyłem.'))
 """
 
 """
