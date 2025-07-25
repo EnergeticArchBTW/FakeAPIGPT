@@ -1,8 +1,10 @@
 from contextlib import suppress
 from seleniumbase import SB
 
+#from selenium.webdriver.common.by import By
+
 #concept with function that always use headless=False
-def chatgpt(prompt):
+def chatgpt(prompt, captcha=False):
     # Set the position to which you want to move the window off-screen
     # These values should be large enough for the window to be outside the visible area.
     # You can adjust them depending on your screen resolution.
@@ -17,17 +19,15 @@ def chatgpt(prompt):
             sb.activate_cdp_mode(url)
             sb.sleep(1)
 
-            #focus on the window
-            sb.execute_script("window.open(''); window.close();")
-            sb.switch_to_default_window() 
-            sb.sleep(0.5)
+            if captcha:
+                sb.uc_gui_click_captcha()
+                sb.sleep(1)
 
-            sb.uc_gui_click_captcha()
-            sb.sleep(1)
-            sb.uc_gui_handle_captcha()
-            sb.sleep(1)
+                sb.uc_gui_handle_captcha()
+                sb.sleep(1)
         
             sb.click_if_visible('button[aria-label="Close dialog"]')
+
             sb.press_keys("#prompt-textarea", prompt)
             sb.click('button[data-testid="send-button"]')
 
@@ -44,10 +44,10 @@ def chatgpt(prompt):
                 soup = soup.replace("\n\n\n", "\n\n")
             return soup
         except Exception as e:
-            #when something goes wrong do it once again
-            return chatgpt(prompt)
+            #when something goes wrong do it once again but with captcha solver
+            return chatgpt(prompt, True)
 
-print(chatgpt('Napisz referat na 500 słów o dzisiejszej ekonomii na bliskim wschodzie (możesz użyć internetu). nie pytaj o szczegóły tylko po prostu pisz. Zakończ ją słowem skończyłem.'))
+print(chatgpt('Jaki smartfon teraz najbardziej się opłaca kupić w polsce?'))
 
 """
 def chatgpt(prompt, headless_mode=True):
@@ -133,7 +133,7 @@ def chatgpt(prompt, headless_mode=True):
     except Exception as e:
         print(f"!!! KRYTYCZNY BŁĄD: Wystąpił nieoczekiwany problem na najwyższym poziomie: {e}")
         raise
-response = chatgpt("Zacytuj dokładnie to co napisałem pod spodem w cudzysłowiach:Ala ma kota")
+response = chatgpt("Siema, jak tam życie? Opowiedz swoją historię.")
 print(response)
 """
 """
