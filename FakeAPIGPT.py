@@ -3,7 +3,7 @@ from seleniumbase import SB
 
 eror_messege = "there is some error, please wait few minutes and try again"
 
-#concept with function that always use headless=False
+#concept with function that always use headless=False (with open browser window)
 def chatgpt(prompt, captcha=False, max_tries=3):
     # Set the position to which you want to move the window off-screen
     # These values should be large enough for the window to be outside the visible area.
@@ -56,27 +56,28 @@ def chatgpt(prompt, captcha=False, max_tries=3):
             #when something goes wrong do it once again but with captcha solver
             return chatgpt(prompt, True, max_tries-1)
 
-print(chatgpt("""przepisz 1:1 co jest na dole:
-                                   /\\
-                    /  \\___
-                   /   /   \\___
-                ___/   |      \\_
-              /        |        \\
-             |  ~~~~   |   ~~~~  |
-             |         |         |
-             |  CLOUDS |  MOUNTS |
-              \\_______|________/
-                    /_|_\\
-                   /__|__\\
-                 //     \\\\
-                ||  🌄   ||
-                ||_______||
-              /____________\\
-             |   EARTHSCAPE |
-              \\____________/\t
-"""))
+#example:
+# print(chatgpt("""przepisz 1:1 co jest na dole:
+#                                    /\\
+#                     /  \\___
+#                    /   /   \\___
+#                 ___/   |      \\_
+#               /        |        \\
+#              |  ~~~~   |   ~~~~  |
+#              |         |         |
+#              |  CLOUDS |  MOUNTS |
+#               \\_______|________/
+#                     /_|_\\
+#                    /__|__\\
+#                  //     \\\\
+#                 ||  🌄   ||
+#                 ||_______||
+#               /____________\\
+#              |   EARTHSCAPE |
+#               \\____________/\t
+# """))
 
-
+# function that usues headless (without browser window) at deafult but at second try turns off headless mode
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
     #Automates interaction with ChatGPT, including handling headless mode switching
     #and attempting to force focus on the browser window in GUI mode.
@@ -147,7 +148,8 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
     except Exception as e:
         return eror_messege
 
-print(chatgpt_headless("Siema, jak tam życie? Opowiedz swoją historię."))
+#example:
+# print(chatgpt_headless("Siema, jak tam życie? Opowiedz swoją historię."))
 
 """
 #original function that worked
