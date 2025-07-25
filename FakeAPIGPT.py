@@ -1,7 +1,7 @@
 from contextlib import suppress
 from seleniumbase import SB
 
-eror_messege = "there is some error, please wait few minutes and try again"
+error_messege = "there is some error, please wait few minutes and try again"
 
 #concept with function that always use headless=False (with open browser window)
 def chatgpt(prompt, captcha=False, max_tries=3):
@@ -12,7 +12,7 @@ def chatgpt(prompt, captcha=False, max_tries=3):
     out_of_view_y = -3000
 
     if max_tries <= 0:
-        return eror_messege
+        return error_messege
     
     #convert text with many lines to some simpler processable object
     prompt = prompt.replace('\n','↩')
@@ -89,7 +89,7 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
     out_of_view_y = -3000
 
     if max_tries <= 0:
-        return eror_messege
+        return error_messege
     
     #convert text with many lines to some simpler processable object
     prompt = prompt.replace('\n','↩')
@@ -146,7 +146,7 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
                 return chatgpt_headless(prompt, False, max_tries-1)
 
     except Exception as e:
-        return eror_messege
+        return error_messege
 
 #example:
 # print(chatgpt_headless("Siema, jak tam życie? Opowiedz swoją historię."))
