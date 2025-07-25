@@ -1,16 +1,16 @@
 from contextlib import suppress
 from seleniumbase import SB
 
+# Set the position to which you want to move the window off-screen
+# These values should be large enough for the window to be outside the visible area.
+# You can adjust them depending on your screen resolution.
+out_of_view_x = -3000
+out_of_view_y = -3000
+
 error_messege = "there is some error, please wait few minutes and try again"
 
 #concept with function that always use headless=False (with open browser window)
 def chatgpt(prompt, captcha=False, max_tries=3):
-    # Set the position to which you want to move the window off-screen
-    # These values should be large enough for the window to be outside the visible area.
-    # You can adjust them depending on your screen resolution.
-    out_of_view_x = -3000
-    out_of_view_y = -3000
-
     if max_tries <= 0:
         return error_messege
     
@@ -81,12 +81,6 @@ def chatgpt(prompt, captcha=False, max_tries=3):
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
     #Automates interaction with ChatGPT, including handling headless mode switching
     #and attempting to force focus on the browser window in GUI mode.
-    
-    # Set the position to which you want to move the window off-screen
-    # These values should be large enough for the window to be outside the visible area.
-    # You can adjust them depending on your screen resolution.
-    out_of_view_x = -3000
-    out_of_view_y = -3000
 
     if max_tries <= 0:
         return error_messege
