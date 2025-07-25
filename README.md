@@ -7,6 +7,10 @@ attempt don't have to even open any browser but it opens in the
 background.
 
 -> first of all: download visual studio code
+-> go to some workspace folder
+```
+git clone https://github.com/EnergeticArchBTW/FakeAPIGPT.git
+```
 -> install chrome browser
 -> download at least python 3.8
 -> download extension for vsc called python
