@@ -9,6 +9,8 @@ out_of_view_y = -3000
 
 error_messege = "there is some error, please wait few minutes and try again"
 
+url = "https://chatgpt.com/"
+
 #concept with function that always use headless=False (with open browser window)
 def chatgpt(prompt, captcha=False, max_tries=3):
     if max_tries <= 0:
@@ -23,7 +25,6 @@ def chatgpt(prompt, captcha=False, max_tries=3):
             sb.set_window_position(out_of_view_x, out_of_view_y)
 
             #go to the chatgpt page
-            url = "https://chatgpt.com/"
             sb.activate_cdp_mode(url)
             sb.sleep(1)
 
@@ -94,7 +95,6 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
                 # Using set_window_position() to move window
                 sb.set_window_position(out_of_view_x, out_of_view_y)
             
-            url = "https://chatgpt.com/"
             sb.activate_cdp_mode(url)
             sb.sleep(1)
 
