@@ -1,7 +1,7 @@
 from contextlib import suppress
 from seleniumbase import SB
 
-#from selenium.webdriver.common.by import By
+eror_messege = "there is some error, please wait few minutes and try again"
 
 #concept with function that always use headless=False
 def chatgpt(prompt, captcha=False, max_tries=3):
@@ -12,7 +12,7 @@ def chatgpt(prompt, captcha=False, max_tries=3):
     out_of_view_y = -3000
 
     if max_tries <= 0:
-        return "there is some error, please wait few minutes and try again"
+        return eror_messege
     
     #convert text with many lines to some simpler processable object
     prompt = prompt.replace('\n','↩')
@@ -78,17 +78,17 @@ print(chatgpt("""przepisz 1:1 co jest na dole:
 
 
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
-    #Automatyzuje interakcję z ChatGPT, z obsługą przełączania trybu headless
-    #i próbą wymuszenia fokusu na oknie przeglądarki w trybie GUI.
+    #Automates interaction with ChatGPT, including handling headless mode switching
+    #and attempting to force focus on the browser window in GUI mode.
     
-    # Ustal pozycję, na którą chcesz przesunąć okno poza widokiem
-    # Te wartości powinny być wystarczająco duże, aby okno było poza ekranem.
-    # Możesz je dostosować w zależności od rozdzielczości Twojego ekranu.
+    # Set the position to which you want to move the window off-screen
+    # These values should be large enough for the window to be outside the visible area.
+    # You can adjust them depending on your screen resolution.
     out_of_view_x = -3000
     out_of_view_y = -3000
 
     if max_tries <= 0:
-        return "there is some error, please wait few minutes and try again"
+        return eror_messege
     
     #convert text with many lines to some simpler processable object
     prompt = prompt.replace('\n','↩')
@@ -96,42 +96,34 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
     try:
         with SB(uc=True, headless2=headless_mode, test=True, do_not_track=True, maximize=True) as sb:
             if not headless_mode:
-                # Używamy set_window_position() do przesunięcia okna
+                # Using set_window_position() to move window
                 sb.set_window_position(out_of_view_x, out_of_view_y)
-                print(f"Ustawiłem pozycję okna przeglądarki na ({out_of_view_x}, {out_of_view_y}) poza widokiem.")
             
             url = "https://chatgpt.com/"
             sb.activate_cdp_mode(url)
-            sb.sleep(1) # Krótka pauza na załadowanie początkowe
+            sb.sleep(1)
 
-            # Jeśli jesteśmy w trybie GUI, spróbuj wymusić fokus na starcie
+            # If we are in GUI mode try use captcha solver and focus methods
             if not headless_mode:
                 sb.uc_gui_click_captcha()
                 sb.sleep(1)
                 sb.uc_gui_handle_captcha()
                 sb.sleep(1)
 
-                print("Wymuszam fokus na oknie przeglądarki...")
-                # Metoda 1: Aktywacja okna za pomocą JavaScript (bardziej niezawodna)
-                # Otwiera nowe puste okno i natychmiast je zamyka, co może przywrócić fokus
+                # Method 1: Window activation using JavaScript (more reliable)
+                # Opens a new blank window and immediately closes it, which may restore focus
                 sb.execute_script("window.open(''); window.close();")
-                # Przejście z powrotem do oryginalnego okna (jeśli było ich więcej)
+                # Switching back to the original window (if there was more than one)
                 sb.switch_to_default_window() 
-                sb.sleep(0.5) # Krótka pauza
+                sb.sleep(0.5)
 
-                # Metoda 2: Proba aktywacji obecnego okna
+                # Method 2: Attempt to activate the current window
                 sb.execute_script("window.focus();")
-                sb.sleep(0.5) # Krótka pauza
+                sb.sleep(0.5)
 
             try:
-                #debugowanie
-                html = sb.get_page_source()
-                with open("debug_headless.html", "w", encoding="utf-8") as f:
-                    f.write(html)
-                
                 sb.wait_for_element("#prompt-textarea", timeout=3)
-                    
-                print("Pole do wpisywania tekstu (#prompt-textarea) jest widoczne. Kontynuuję.")
+                
                 sb.click_if_visible('button[aria-label="Close dialog"]')
                 sb.press_keys("#prompt-textarea", prompt)
                 sb.click('button[data-testid="send-button"]')
@@ -144,29 +136,17 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
                     
                 chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
                 soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
-                #poprawiam odległości między linijkami
+                #I'm adjusting the spacing between lines
                 for i in range(4):
                     soup = soup.replace("\n\n\n", "\n\n")
                 return soup
 
             except Exception as e:
-                if ("was not found after" in str(e) and "#prompt-textarea" in str(e)) or "object has no attribute" in str(e):
-                    print(f">>> Timeout: {e}")
-                    
-                    if headless_mode:
-                        print("Wykryto timeout w trybie headless. Próbuję ponownie w trybie GUI...")
-                        return chatgpt_headless(prompt, False, max_tries-1)
-                    else:
-                        print("Wykryto timeout w trybie GUI. Prawdopodobnie CAPTCHA lub inna blokada wymaga interwencji.")
-                        print("Próbuję rozwiązać CAPTCHA za pomocą sb.uc_gui_click_captcha() i sb.uc_gui_handle_captcha()...")
-                        return chatgpt_headless(prompt, False, max_tries-1)
-                else:
-                    print(f"!!! BŁĄD: Wystąpił nieoczekiwany błąd wewnątrz sesji SeleniumBase: {e}")
-                    raise
+                return chatgpt_headless(prompt, False, max_tries-1)
 
     except Exception as e:
-        print(f"!!! KRYTYCZNY BŁĄD: Wystąpił nieoczekiwany problem na najwyższym poziomie: {e}")
-        raise
+        return eror_messege
+
 print(chatgpt_headless("Siema, jak tam życie? Opowiedz swoją historię."))
 
 """
