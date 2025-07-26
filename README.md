@@ -6,20 +6,28 @@ imported as return from function or less stable (browser at a first
 attempt don't have to even open any browser but it opens in the
 background.
 
+---
+
 -> first of all: download visual studio code
+
 -> go to some workspace folder
 ```
 git clone https://github.com/EnergeticArchBTW/FakeAPIGPT.git
 ```
 -> install chrome browser
+
 -> download at least python 3.8
--> download extension for vsc called python
+
+-> download extension for vsc called python (when you want to code something additionally)
+
 -> type ctrl + shift + P and type:
 ```
 Python: Create Environment
 ```
 -> choose Venv and some installed python version at least 3.8
+
 -> in vsc in windows type ctrl + ~ or on mac cmd + ~
+
 -> type
 ```
 git clone https://github.com/seleniumbase/SeleniumBase.git
@@ -28,10 +36,14 @@ pip install . --user
 cd ..
 ```
 -> now you can import this package to your code like any other package
+outside of that folder when the your python file is a neighbourhood
+of the FakeAPIGPT folder module
+```
+from FakeAPIGPT import chatgpt, chatgpt_headless
+```
 -> or test my examples by uncomment them.
 
-If there is any problems with script:
-1. try this:
+If there is any problems with script, try this:
 ```
 pip uninstall setuptools
 pip install setuptools==65.5.0
