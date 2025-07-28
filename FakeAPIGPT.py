@@ -62,15 +62,11 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
                     attach_button_selector = 'div[data-testid="composer-action-file-upload"] > div > span > div > button'
 
                     # 3. Wait until the "Attach" button is visible and ready for interaction, then click it
-                    print(f"Waiting for the 'Attach' button with the selector: {attach_button_selector}")
                     sb.wait_for_element(attach_button_selector, timeout=15)
                     sb.click(attach_button_selector)
-                    print('The "Attach" button was clicked using SeleniumBase (with a precise selector).')
 
                     # 4. Click the visible “Attach photo” option in the menu
                     file_attach_option_selector = """div[role='menuitem']:last-of-type"""
-
-                    print(f"Waiting for the “Attach files” option in the menu with the selector: {file_attach_option_selector}")
 
                     keyboard = Controller()
                     # Hold key esc to quit full-screen mode
@@ -81,7 +77,6 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
 
                     sb.wait_for_element(file_attach_option_selector, timeout=10)
                     sb.click(file_attach_option_selector)
-                    print("The “Attach files” option in the menu was clicked. Now waiting for the menu to close and the system file picker window to open.")
 
                     # Add a short pause to give the application time to close the menu
                     # And wait for the system file picker window to open before starting to type the file path
@@ -91,13 +86,11 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
                     keyboard.type(photo)
                     keyboard.press(Key.enter)
                     keyboard.release(Key.enter)
-                    print(f"The file path '{photo}' was entered and confirmed.")
 
                     # 6. wait for file to upload
                     sb.sleep(1)
                     sb.wait_for_element_clickable("#composer-submit-button")
                 except Exception as e:
-                    print(f"An error occurred while trying to click the button or open the menu: {e}")
                     # Optionally: Take a screenshot in case of an error to facilitate debugging
                     sb.save_screenshot_to_logs()
                     # Optionally: Print the page source to inspect the current DOM if the issue recurs
@@ -153,9 +146,9 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
 # what this drawing shows?
 # """, "C:\\Users\\User\\Downloads\\photo.jpg"))
 
-print(chatgpt("""
-What are the news today from the world?
-""", WEB_SEARCH))
+# print(chatgpt("""
+# What are the news today from the world?
+# """, WEB_SEARCH))
 
 # function that usues headless (without browser window) at deafult but at second try turns off headless mode
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
