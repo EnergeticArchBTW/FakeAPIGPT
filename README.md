@@ -17,6 +17,10 @@ chatgpt("prompt", "DIRECT\\SOURCE\\To\\THE\\FILE")
 ```
 
 if you upload photo in automate chatgpt have access to the search engine.
+(you need to install pynput library:
+```
+pip install pynput --user
+```
 
 ---
 
