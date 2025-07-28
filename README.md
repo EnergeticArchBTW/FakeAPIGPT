@@ -6,6 +6,18 @@ imported as return from function or less stable (browser at a first
 attempt don't have to even open any browser but it opens in the
 background.
 
+If you want to bot to use internet browsing do this (only works in chatgpt() function):
+```
+chatgpt("prompt", WEB_SEARCH)
+```
+
+if you want to upload some .gif, .jpg, .jpeg, .png or .webp image:
+```
+chatgpt("prompt", "DIRECT\\SOURCE\\To\\THE\\FILE")
+```
+
+if you upload photo in automate chatgpt have access to the search engine.
+
 ---
 
 -> first of all: download visual studio code

@@ -1,5 +1,6 @@
 from contextlib import suppress
 from seleniumbase import SB
+import os
 
 # Set the position to which you want to move the window off-screen
 # These values should be large enough for the window to be outside the visible area.
@@ -7,17 +8,25 @@ from seleniumbase import SB
 out_of_view_x = -3000
 out_of_view_y = -3000
 
-error_messege = "there is some error, please wait few minutes and try again"
+error_messege = "There is some error, please wait few minutes and try again."
 
 url = "https://chatgpt.com/"
 
-#concept with function that always use headless=False (with open browser window)
-def chatgpt(prompt, captcha=False, max_tries=3):
-    if max_tries <= 0:
+#use this const for second argument in function chatgpt() to get acces to the search web
+WEB_SEARCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default.png")
+
+#preprocessing prompt
+def preprocess_prompt(prompt):
+    return "(pre prompt:↩=newLine)" + prompt.replace('\n','↩')
+
+#concept with function that always use headless=False (with open browser window) and you can upload photos
+def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
+    # we are checking max tries and the attached file exists
+    if max_tries <= 0 or (photo!=None and not os.path.isfile(photo)):
         return error_messege
     
     #convert text with many lines to some simpler processable object
-    prompt = prompt.replace('\n','↩')
+    prompt = preprocess_prompt(prompt)
 
     with SB(uc=True) as sb:
         try:
@@ -38,17 +47,79 @@ def chatgpt(prompt, captcha=False, max_tries=3):
         
             sb.click_if_visible('button[aria-label="Close dialog"]')
 
+            #writing prompt
             sb.press_keys("#prompt-textarea", prompt)
+
+            #photo
+            if photo != None:
+                try:
+                    # 1. Import the appropriate libraries and ensure the page is fully loaded
+                    from pynput.keyboard import Key, Controller
+                    sb.wait_for_ready_state_complete()
+
+                    # 2. Define a new, precise CSS selector for the "Attach" button
+                    # Hierarchy: div with data-testid="composer-action-file-upload" → direct div → span → direct div → button
+                    attach_button_selector = 'div[data-testid="composer-action-file-upload"] > div > span > div > button'
+
+                    # 3. Wait until the "Attach" button is visible and ready for interaction, then click it
+                    print(f"Waiting for the 'Attach' button with the selector: {attach_button_selector}")
+                    sb.wait_for_element(attach_button_selector, timeout=15)
+                    sb.click(attach_button_selector)
+                    print('The "Attach" button was clicked using SeleniumBase (with a precise selector).')
+
+                    # 4. Click the visible “Attach photo” option in the menu
+                    file_attach_option_selector = """div[role='menuitem']:last-of-type"""
+
+                    print(f"Waiting for the “Attach files” option in the menu with the selector: {file_attach_option_selector}")
+
+                    keyboard = Controller()
+                    # Hold key esc to quit full-screen mode
+                    if photo != WEB_SEARCH:
+                        keyboard.press(Key.esc)
+                        sb.sleep(3)
+                        keyboard.release(Key.esc)
+
+                    sb.wait_for_element(file_attach_option_selector, timeout=10)
+                    sb.click(file_attach_option_selector)
+                    print("The “Attach files” option in the menu was clicked. Now waiting for the menu to close and the system file picker window to open.")
+
+                    # Add a short pause to give the application time to close the menu
+                    # And wait for the system file picker window to open before starting to type the file path
+                    sb.sleep(1)
+
+                    # 5. Next, handle the file selection window
+                    keyboard.type(photo)
+                    keyboard.press(Key.enter)
+                    keyboard.release(Key.enter)
+                    print(f"The file path '{photo}' was entered and confirmed.")
+
+                    # 6. wait for file to upload
+                    sb.sleep(1)
+                    sb.wait_for_element_clickable("#composer-submit-button")
+                except Exception as e:
+                    print(f"An error occurred while trying to click the button or open the menu: {e}")
+                    # Optionally: Take a screenshot in case of an error to facilitate debugging
+                    sb.save_screenshot_to_logs()
+                    # Optionally: Print the page source to inspect the current DOM if the issue recurs
+                    # print(sb.get_page_source())
+                    return chatgpt(prompt, photo, True, max_tries-1)
+
+            sb.wait_for_element('button[data-testid="send-button"]')
             sb.click('button[data-testid="send-button"]')
 
             sb.sleep(3)
             with suppress(Exception):
                 # The "Stop" button disappears when ChatGPT is done typing a response
                 sb.wait_for_element_not_visible(
-                    'button[data-testid="stop-button"]', timeout=200
+                    'button[data-testid="stop-button"]', timeout=120
                 )
             chat = sb.find_element('[data-message-author-role="assistant"] .markdown')
-            soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
+            #print(chat.text)
+            try:
+                soup = sb.get_beautiful_soup(chat.get_html()).get_text("\n").strip()
+            except AttributeError as e:
+                soup = chat.text
+            
             #remove spaces between lines
             for i in range(4):
                 soup = soup.replace("\n\n\n", "\n\n")
@@ -57,9 +128,9 @@ def chatgpt(prompt, captcha=False, max_tries=3):
             #when something goes wrong do it once again but with captcha solver
             return chatgpt(prompt, True, max_tries-1)
 
-#example:
-# print(chatgpt("""przepisz 1:1 co jest na dole:
-#                                    /\\
+#examples:
+# print(chatgpt("""Copy 1:1 what’s at the bottom:
+#                      /\\
 #                     /  \\___
 #                    /   /   \\___
 #                 ___/   |      \\_
@@ -78,6 +149,14 @@ def chatgpt(prompt, captcha=False, max_tries=3):
 #               \\____________/\t
 # """))
 
+# print(chatgpt("""
+# what this drawing shows?
+# """, "C:\\Users\\User\\Downloads\\photo.jpg"))
+
+print(chatgpt("""
+What are the news today from the world?
+""", WEB_SEARCH))
+
 # function that usues headless (without browser window) at deafult but at second try turns off headless mode
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
     #Automates interaction with ChatGPT, including handling headless mode switching
@@ -87,7 +166,7 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
         return error_messege
     
     #convert text with many lines to some simpler processable object
-    prompt = prompt.replace('\n','↩')
+    prompt = preprocess_prompt(prompt)
 
     try:
         with SB(uc=True, headless2=headless_mode, do_not_track=True, maximize=True) as sb:
@@ -143,7 +222,7 @@ def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
         return error_messege
 
 #example:
-# print(chatgpt_headless("Siema, jak tam życie? Opowiedz swoją historię."))
+# print(chatgpt_headless("Hey, how's life? Tell your story and quote exactly what I just said."))
 
 """
 #original function that worked
