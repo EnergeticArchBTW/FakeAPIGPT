@@ -21,6 +21,7 @@ if you upload photo in automate chatgpt have access to the search engine.
 ```
 pip install pynput --user
 ```
+)
 
 ---
 
