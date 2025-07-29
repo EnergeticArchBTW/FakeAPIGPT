@@ -5,8 +5,8 @@ import os
 # Set the position to which you want to move the window off-screen
 # These values should be large enough for the window to be outside the visible area.
 # You can adjust them depending on your screen resolution.
-out_of_view_x = -3000
-out_of_view_y = -3000
+out_of_view_x = 0
+out_of_view_y = 0
 
 error_messege = "There is some error, please wait few minutes and try again."
 
@@ -52,23 +52,28 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
 
             #photo
             if photo != None:
-                try:
-                    # 1. Import the appropriate libraries and ensure the page is fully loaded
-                    from pynput.keyboard import Key, Controller
-                    sb.wait_for_ready_state_complete()
+                # 1. Import the appropriate libraries and ensure the page is fully loaded
+                from pynput.keyboard import Key, Controller
+                sb.wait_for_ready_state_complete()
 
-                    # 2. Define a new, precise CSS selector for the "Attach" button
-                    # Hierarchy: div with data-testid="composer-action-file-upload" → direct div → span → direct div → button
-                    attach_button_selector = 'div[data-testid="composer-action-file-upload"] > div > span > div > button'
+                # 2. Define a new, precise CSS selector for the "Attach" button
+                # Hierarchy: div with data-testid="composer-action-file-upload" → direct div → span → direct div → button
+                attach_button_selector = 'div[data-testid="composer-action-file-upload"] > div > span > div > button'
 
-                    # 3. Wait until the "Attach" button is visible and ready for interaction, then click it
-                    sb.wait_for_element(attach_button_selector, timeout=15)
-                    sb.click(attach_button_selector)
+                # 3. Wait until the "Attach" button is visible and ready for interaction, then click it
+                sb.wait_for_element(attach_button_selector, timeout=15)
+                sb.click(attach_button_selector)
 
-                    # 4. Click the visible “Attach photo” option in the menu
-                    file_attach_option_selector = """div[role='menuitem']:last-of-type"""
+                # 4. Click the visible “Attach photo” option in the menu
+                file_attach_option_selector = """div[role='menuitem']:last-of-type"""
 
-                    keyboard = Controller()
+                keyboard = Controller()
+
+                #To prevent overlapping input events when using pynput, the typing logic should be placed inside a critical section protected by a lock.
+                import threading
+                lock = threading.Lock()
+                
+                with lock:
                     # Hold key esc to quit full-screen mode
                     if photo != WEB_SEARCH:
                         keyboard.press(Key.esc)
@@ -87,15 +92,9 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
                     keyboard.press(Key.enter)
                     keyboard.release(Key.enter)
 
-                    # 6. wait for file to upload
-                    sb.sleep(1)
-                    sb.wait_for_element_clickable("#composer-submit-button")
-                except Exception as e:
-                    # Optionally: Take a screenshot in case of an error to facilitate debugging
-                    sb.save_screenshot_to_logs()
-                    # Optionally: Print the page source to inspect the current DOM if the issue recurs
-                    # print(sb.get_page_source())
-                    return chatgpt(prompt, photo, True, max_tries-1)
+                # 6. wait for file to upload
+                sb.sleep(3)
+                sb.wait_for_element_clickable("#composer-submit-button")
 
             sb.wait_for_element('button[data-testid="send-button"]')
             sb.click('button[data-testid="send-button"]')
@@ -118,8 +117,12 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
                 soup = soup.replace("\n\n\n", "\n\n")
             return soup
         except Exception as e:
+            # Optionally: Take a screenshot in case of an error to facilitate debugging
+            sb.save_screenshot_to_logs()
+            # Optionally: Print the page source to inspect the current DOM if the issue recurs
+            # print(sb.get_page_source())
             #when something goes wrong do it once again but with captcha solver
-            return chatgpt(prompt, True, max_tries-1)
+            return chatgpt(prompt, photo, True, max_tries-1)
 
 #examples:
 # print(chatgpt("""Copy 1:1 what’s at the bottom:
@@ -146,9 +149,9 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
 # what this drawing shows?
 # """, "C:\\Users\\User\\Downloads\\photo.jpg"))
 
-# print(chatgpt("""
-# What are the news today from the world?
-# """, WEB_SEARCH))
+print(chatgpt("""
+What are the news today from the world?
+""", WEB_SEARCH))
 
 # function that usues headless (without browser window) at deafult but at second try turns off headless mode
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
