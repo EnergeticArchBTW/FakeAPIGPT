@@ -5,8 +5,8 @@ import os
 # Set the position to which you want to move the window off-screen
 # These values should be large enough for the window to be outside the visible area.
 # You can adjust them depending on your screen resolution.
-out_of_view_x = 0
-out_of_view_y = 0
+out_of_view_x = -3000
+out_of_view_y = -3000
 
 error_messege = "There is some error, please wait few minutes and try again."
 
