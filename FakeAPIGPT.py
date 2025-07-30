@@ -158,9 +158,9 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
 # what this drawing shows?
 # """, "C:\\Users\\User\\Downloads\\photo.jpg"))
 
-print(chatgpt("""
-What are the news today from the world?
-""", WEB_SEARCH))
+# print(chatgpt("""
+# What are the news today from the world?
+# """, WEB_SEARCH))
 
 # function that usues headless (without browser window) at deafult but at second try turns off headless mode
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
