@@ -17,7 +17,7 @@ WEB_SEARCH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "default.p
 
 #preprocessing prompt
 def preprocess_prompt(prompt):
-    return "(pre prompt:↩=newLine)" + prompt.replace('\n','↩')
+    return "(↩=newLine)" + prompt.replace('\n','↩')
 
 #concept with function that always use headless=False (with open browser window) and you can upload photos
 def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
@@ -100,6 +100,15 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
             sb.click('button[data-testid="send-button"]')
 
             sb.sleep(3)
+
+            if photo != None:
+                try:
+                    sb.assert_element("img")
+                    #img was found!
+                except Exception as e:
+                    #img was not found try the whole process again!
+                    return chatgpt(prompt, photo, True, max_tries-1)
+
             with suppress(Exception):
                 # The "Stop" button disappears when ChatGPT is done typing a response
                 sb.wait_for_element_not_visible(
@@ -149,9 +158,9 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
 # what this drawing shows?
 # """, "C:\\Users\\User\\Downloads\\photo.jpg"))
 
-# print(chatgpt("""
-# What are the news today from the world?
-# """, WEB_SEARCH))
+print(chatgpt("""
+What are the news today from the world?
+""", WEB_SEARCH))
 
 # function that usues headless (without browser window) at deafult but at second try turns off headless mode
 def chatgpt_headless(prompt, headless_mode=True, max_tries=3):
