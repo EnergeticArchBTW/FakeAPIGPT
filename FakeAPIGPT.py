@@ -1,5 +1,6 @@
 from contextlib import suppress
 from seleniumbase import SB
+import threading
 import os
 
 # Set the position to which you want to move the window off-screen
@@ -28,7 +29,7 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
     #convert text with many lines to some simpler processable object
     prompt = preprocess_prompt(prompt)
 
-    with SB(uc=True) as sb:
+    with SB(uc=True, incognito=True) as sb:
         try:
             #moving the window away from screen
             sb.set_window_position(out_of_view_x, out_of_view_y)
@@ -70,9 +71,7 @@ def chatgpt(prompt, photo=None, captcha=False, max_tries=3):
                 keyboard = Controller()
 
                 #To prevent overlapping input events when using pynput, the typing logic should be placed inside a critical section protected by a lock.
-                import threading
                 lock = threading.Lock()
-                
                 with lock:
                     # Hold key esc to quit full-screen mode
                     if photo != WEB_SEARCH:

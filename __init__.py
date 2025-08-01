@@ -1,1 +1,1 @@
-from .FakeAPIGPT import chatgpt, chatgpt_headless
+from .FakeAPIGPT import chatgpt, chatgpt_headless, WEB_SEARCH
